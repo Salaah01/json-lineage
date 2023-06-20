@@ -19,6 +19,10 @@ impl ByteIterator {
         let reader = BufReader::new(file);
         Ok(Self { reader })
     }
+
+    pub fn next_char(&mut self) -> Option<char> {
+        self.next().unwrap().unwrap().chars().next()
+    }
 }
 
 impl Iterator for ByteIterator {
