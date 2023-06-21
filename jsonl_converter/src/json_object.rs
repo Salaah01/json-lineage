@@ -4,12 +4,20 @@
 use core::fmt;
 use regex::Regex;
 
+/// This struct represents a JSONL string being built.
+///
+/// # Fields
+///
+/// * `string` - The JSONL string being built.
+/// * `clean_re_pattern` - A regular expression pattern used to clean the
+/// JSONL string.
 pub struct JSONLString {
     string: String,
     clean_re_pattern: Regex,
 }
 
 impl JSONLString {
+    /// Creates a new instance of `JSONLString`.
     pub fn new() -> Self {
         JSONLString {
             string: String::new(),
@@ -17,14 +25,53 @@ impl JSONLString {
         }
     }
 
+    /// Adds a character to the `string`.
+    ///
+    /// # Arguments
+    ///
+    /// * `c` - A character.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jsonl_converter::json_object::JSONLString;
+    ///
+    /// let mut jsonl_string = JSONLString::new();
+    /// jsonl_string.push_char(&'a');
+    /// ```
     pub fn push_char(&mut self, c: &char) {
         self.string.push(*c);
     }
 
+    /// Adds a string to the `string`.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - A string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jsonl_converter::json_object::JSONLString;
+    ///
+    /// let mut jsonl_string = JSONLString::new();
+    /// jsonl_string.push_str(&"abc");
+    /// ```
     pub fn push_str(&mut self, s: &str) {
         self.string.push_str(s);
     }
 
+    /// Clears the `string`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use jsonl_converter::json_object::JSONLString;
+    ///
+    /// let mut jsonl_string = JSONLString::new();
+    /// jsonl_string.push_str(&"abc");
+    /// jsonl_string.clear();
+    /// ```
     pub fn clear(&mut self) {
         self.string.clear();
     }

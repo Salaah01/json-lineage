@@ -7,19 +7,60 @@ use std::{
     io::{self, BufReader, Read},
 };
 
+/// Verifies that the first character of the file is a '['.
+///
+/// # Arguments
+///
+/// * `first_char` - The first character of the file.
+///
+/// # Panics
+///
+/// * If the first character of the file is not a '['.
+///
+/// # Examples
+///
+/// ```
+/// use jsonl_converter::reader::verify_first_char;
+///
+/// let first_char = '[';
+/// verify_first_char(&first_char);
+/// ```
+pub fn verify_first_char(first_char: &char) {
+    if first_char != &'[' {
+        panic!(
+            "The first character of the file must be a '[', not a '{}'.",
+            first_char
+        );
+    }
+}
+
 /// This struct is used to iterate over the bytes of a file.
+///
+///
+/// # Fields
+///
+/// * `reader` - A `BufReader` that reads the file.
 pub struct ByteIterator {
     reader: BufReader<File>,
 }
 
 impl ByteIterator {
     /// Creates a new `ByteIterator` from a file.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `filename` - The name of the file.
+    /// 
+    /// # Errors
+    /// 
+    /// * If the file cannot be opened.
     pub fn new(filename: &str) -> io::Result<Self> {
         let file = File::open(filename)?;
         let reader = BufReader::new(file);
         Ok(Self { reader })
     }
 
+    /// Returns the next character of the file.
     pub fn next_char(&mut self) -> Option<char> {
         self.next().unwrap().unwrap().chars().next()
     }
@@ -36,16 +77,6 @@ impl Iterator for ByteIterator {
             Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => None,
             Err(error) => Some(Err(error)),
         }
-    }
-}
-
-/// Verifies that the first character of the file is a '['.
-pub fn verify_first_char(first_char: &char) {
-    if first_char != &'[' {
-        panic!(
-            "The first character of the file must be a '[', not a '{}'.",
-            first_char
-        );
     }
 }
 

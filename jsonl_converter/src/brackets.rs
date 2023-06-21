@@ -4,7 +4,8 @@
 
 use std::collections::HashMap;
 
-/// Checks if a character is an opening bracket.
+/// Checks if a character is an opening bracket. Note: this function does not
+/// consider '(' to be an opening bracket because it is not used in JSON.
 ///
 /// # Arguments
 ///
@@ -14,6 +15,17 @@ use std::collections::HashMap;
 ///
 /// * `true` if the character is an opening bracket.
 /// * `false` if the character is not an opening bracket.
+///
+/// # Examples
+///
+/// ```
+/// use jsonl_converter::brackets::is_opening_bracket;
+///
+/// assert_eq!(is_opening_bracket(&'['), true);
+/// assert_eq!(is_opening_bracket(&'a'), false);
+/// assert_eq!(is_opening_bracket(&'('), false);
+/// assert_eq!(is_opening_bracket(&'{'), true);
+/// ```
 pub fn is_opening_bracket(c: &char) -> bool {
     match c {
         '[' | '{' => true,
@@ -21,7 +33,8 @@ pub fn is_opening_bracket(c: &char) -> bool {
     }
 }
 
-/// Checks if a character is a closing bracket.
+/// Checks if a character is a closing bracket. Note: this function does not
+/// consider ')' to be a closing bracket because it is not used in JSON.
 ///     
 /// # Arguments
 ///
@@ -31,6 +44,18 @@ pub fn is_opening_bracket(c: &char) -> bool {
 ///
 /// * `true` if the character is a closing bracket.
 /// * `false` if the character is not a closing bracket.
+///
+/// # Examples
+///
+/// ```
+/// use jsonl_converter::brackets::is_closing_bracket;
+///
+/// assert_eq!(is_closing_bracket(&']'), true);
+/// assert_eq!(is_closing_bracket(&'a'), false);
+/// assert_eq!(is_closing_bracket(&')'), false);
+/// assert_eq!(is_closing_bracket(&'}'), true);
+/// 
+/// ```
 pub fn is_closing_bracket(c: &char) -> bool {
     match c {
         ']' | '}' => true,
@@ -40,6 +65,21 @@ pub fn is_closing_bracket(c: &char) -> bool {
 
 /// Returns a map of brackets with their corresponding opening and closing
 /// brackets.
+///
+/// # Returns
+///
+/// * A map of brackets with their corresponding opening and closing brackets.
+///
+/// # Examples
+///
+/// ```
+/// use jsonl_converter::brackets::brackets_map;
+///
+/// let map = brackets_map();
+///
+/// assert_eq!(map.get(&']'), Some(&'['));
+/// assert_eq!(map.get(&'}'), Some(&'{'));
+/// ```
 pub fn brackets_map() -> HashMap<char, char> {
     let mut map = HashMap::new();
     map.insert(']', '[');
