@@ -2,51 +2,7 @@
 //! objects.
 
 use core::fmt;
-use std::collections::HashMap;
-
 use regex::Regex;
-
-/// This struct represents a section of a JSON object.
-pub struct JSONElement {
-    pub value: JSONValue,
-}
-
-impl JSONElement {
-    /// Creates a new `JSONElement` from a `JSONValue`.
-    pub fn new(value: JSONValue) -> Self {
-        JSONElement { value }
-    }
-}
-
-/// This enum represents all variants of a JSON value.
-pub enum JSONValue {
-    String(String),
-    Number(f64),
-    Boolean(bool),
-    Null,
-    Array(Vec<JSONValue>),
-    Object(HashMap<String, JSONValue>),
-}
-
-/// Represents the overall type of a JSON object.
-#[derive(Debug, PartialEq)]
-pub enum JSONType {
-    List,
-    Object,
-}
-
-impl JSONType {
-    pub fn from_char(c: &char) -> Self {
-        match c {
-            '[' => JSONType::List,
-            '{' => JSONType::Object,
-            c => panic!(
-                "JSONType::from_char() called on non-list or non-object ({})",
-                c
-            ),
-        }
-    }
-}
 
 pub struct JSONLString {
     string: String,
@@ -57,7 +13,7 @@ impl JSONLString {
     pub fn new() -> Self {
         JSONLString {
             string: String::new(),
-            clean_re_pattern: Regex::new(r"\n\s{1,}").unwrap(),
+            clean_re_pattern: Regex::new(r"\s{0,}\n\s{0,}").unwrap(),
         }
     }
 
@@ -86,14 +42,44 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_json_type_from_element_list() {
-        let element = JSONElement::new(JSONValue::Array(vec![]));
-        assert_eq!(JSONType::from_char(&element), JSONType::List);
+    fn test_jsonl_string_new_instance_is_empty() {
+        let jsonl_string = JSONLString::new();
+        assert_eq!(jsonl_string.string, "");
     }
 
     #[test]
-    fn test_json_type_from_element_object() {
-        let element = JSONElement::new(JSONValue::Object(HashMap::new()));
-        assert_eq!(JSONType::from_char(&element), JSONType::Object);
+    fn test_jsonl_string_push_char_adds_char_to_string() {
+        let mut jsonl_string = JSONLString::new();
+        jsonl_string.push_char(&'a');
+        assert_eq!(jsonl_string.string, "a");
+    }
+
+    #[test]
+    fn test_jsonl_string_push_str_adds_str_to_string() {
+        let mut jsonl_string = JSONLString::new();
+        jsonl_string.push_str("abc");
+        assert_eq!(jsonl_string.string, "abc");
+    }
+
+    #[test]
+    fn test_jsonl_string_clear_removes_all_chars_from_string() {
+        let mut jsonl_string = JSONLString::new();
+        jsonl_string.push_str("abc");
+        jsonl_string.clear();
+        assert_eq!(jsonl_string.string, "");
+    }
+
+    #[test]
+    fn test_jsonl_string_display_trait_impl_returns_string_without_spaces() {
+        let mut jsonl_string = JSONLString::new();
+        jsonl_string.push_str("    \n{\"a\": 1}\n\"");
+        assert_eq!(jsonl_string.to_string(), "{\"a\": 1}\"");
+    }
+
+    #[test]
+    fn test_jsonl_string_display_removes_leading_comma() {
+        let mut jsonl_string = JSONLString::new();
+        jsonl_string.push_str(",\n{\"a\": 1}");
+        assert_eq!(jsonl_string.to_string(), "{\"a\": 1}");
     }
 }

@@ -4,23 +4,6 @@
 
 use std::collections::HashMap;
 
-/// Checks if a character is a bracket.
-///
-/// # Arguments
-///
-/// * `c` - A character.
-///
-/// # Returns
-///
-/// * `true` if the character is a bracket.
-/// * `false` if the character is not a bracket.
-pub fn is_bracket(c: &str) -> bool {
-    match c {
-        "[" | "]" | "{" | "}" | "\"" => true,
-        _ => false,
-    }
-}
-
 /// Checks if a character is an opening bracket.
 ///
 /// # Arguments
@@ -142,5 +125,94 @@ impl Iterator for BracketStack {
 impl ExactSizeIterator for BracketStack {
     fn len(&self) -> usize {
         self.stack.len()
+    }
+}
+
+#[cfg(test)]
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_opening_bracket_returns_true_for_opening_bracket() {
+        assert_eq!(is_opening_bracket(&'['), true);
+        assert_eq!(is_opening_bracket(&'{'), true);
+        assert_eq!(is_opening_bracket(&']'), false);
+        assert_eq!(is_opening_bracket(&'}'), false);
+    }
+
+    #[test]
+    fn test_is_closing_bracket_returns_true_for_closing_bracket() {
+        assert_eq!(is_closing_bracket(&']'), true);
+        assert_eq!(is_closing_bracket(&'}'), true);
+        assert_eq!(is_closing_bracket(&'['), false);
+        assert_eq!(is_closing_bracket(&'{'), false);
+    }
+
+    #[test]
+    fn test_brackets_map_returns_correct_map() {
+        let map = brackets_map();
+        assert_eq!(map[&']'], '[');
+        assert_eq!(map[&'}'], '{');
+    }
+
+    #[test]
+    fn test_bracket_stack_is_empty_returns_true_for_empty_bracket_stack() {
+        let stack = BracketStack::new();
+        assert_eq!(stack.is_empty(), true);
+    }
+
+    #[test]
+    fn test_bracket_stack_is_empty_returns_false_for_non_empty_bracket_stack() {
+        let mut stack = BracketStack::new();
+        stack.push(&'[');
+        assert_eq!(stack.is_empty(), false);
+    }
+
+    #[test]
+    fn test_bracket_stack_push_adds_bracket_to_stack() {
+        let mut stack = BracketStack::new();
+        stack.push(&'[');
+        assert_eq!(stack.stack, vec!['[']);
+    }
+
+    #[test]
+    fn test_bracket_stack_pop_pair_returns_correct_bracket() {
+        let mut stack = BracketStack::new();
+        stack.push(&'[');
+        assert_eq!(stack.pop_pair(&']'), Some('['));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_bracket_stack_pop_pair_panics_on_mismatched_brackets() {
+        let mut stack = BracketStack::new();
+        stack.push(&'[');
+        stack.pop_pair(&'{');
+    }
+
+    #[test]
+    fn test_bracket_stack_iterator() {
+        let mut stack = BracketStack::new();
+        stack.push(&'[');
+        stack.push(&'{');
+        stack.push(&'}');
+        stack.push(&']');
+        let mut iter = stack.into_iter();
+        assert_eq!(iter.next(), Some(']'));
+        assert_eq!(iter.next(), Some('}'));
+        assert_eq!(iter.next(), Some('{'));
+        assert_eq!(iter.next(), Some('['));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_bracket_stack_exact_size_iterator() {
+        let mut stack = BracketStack::new();
+        stack.push(&'[');
+        stack.push(&'{');
+        stack.push(&'}');
+        stack.push(&']');
+        assert_eq!(stack.len(), 4);
     }
 }

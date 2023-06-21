@@ -3,6 +3,7 @@
 //! instead of reading the entire file into memory at once.
 
 use std::{
+    env,
     fs::File,
     io::{self, BufReader, Read},
 };
@@ -39,6 +40,23 @@ impl Iterator for ByteIterator {
     }
 }
 
+/// Returns the filepath from the command line arguments assuming that the
+/// filepath is the first argument.
+pub fn get_filepath() -> String {
+    let args: Vec<String> = env::args().collect();
+    args[1].to_owned()
+}
+
+/// Verifies that the first character of the file is a '['.
+pub fn verify_first_char(first_char: &char) {
+    if first_char != &'[' {
+        panic!(
+            "The first character of the file must be a '[', not a '{}'.",
+            first_char
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -66,5 +84,16 @@ mod tests {
         }
 
         assert_eq!(bytes, include_str!("reader.rs"));
+    }
+
+    #[test]
+    fn test_verify_first_char_passes() {
+        verify_first_char(&'[');
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_verify_first_char_panics_on_invalid_first_char() {
+        verify_first_char(&'a');
     }
 }
