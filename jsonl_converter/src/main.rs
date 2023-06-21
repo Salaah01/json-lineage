@@ -2,7 +2,8 @@ extern crate jsonl_converter;
 
 use jsonl_converter::brackets::{is_closing_bracket, is_opening_bracket, BracketStack};
 use jsonl_converter::json_object::JSONLString;
-use jsonl_converter::reader::{get_filepath, verify_first_char, ByteIterator};
+use jsonl_converter::reader::{verify_first_char, ByteIterator};
+use jsonl_converter::cli::get_filepath;
 
 fn main() {
     let mut bytes_iter = ByteIterator::new(&get_filepath()).unwrap();

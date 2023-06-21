@@ -3,7 +3,6 @@
 //! instead of reading the entire file into memory at once.
 
 use std::{
-    env,
     fs::File,
     io::{self, BufReader, Read},
 };
@@ -38,13 +37,6 @@ impl Iterator for ByteIterator {
             Err(error) => Some(Err(error)),
         }
     }
-}
-
-/// Returns the filepath from the command line arguments assuming that the
-/// filepath is the first argument.
-pub fn get_filepath() -> String {
-    let args: Vec<String> = env::args().collect();
-    args[1].to_owned()
 }
 
 /// Verifies that the first character of the file is a '['.
