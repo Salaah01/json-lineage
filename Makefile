@@ -17,3 +17,9 @@ compile-linux:
 copy-linux-executable:
 	cp $(COMPILED_LINUX_PATH) $(ADAPTERS_PYTHON_BIN_PATH)/jsonl_converter
 
+build-docs:
+	rm -rf docs/cargo
+	cd jsonl_converter \
+	&& cargo doc --no-deps \
+	&& mkdir -p ../docs/cargo \
+	&& cp -r target/doc/* ../docs/cargo

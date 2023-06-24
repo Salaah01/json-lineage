@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["brackets_map","is_closing_bracket","is_opening_bracket"],"struct":["BracketStack"]};
