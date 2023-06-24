@@ -19,6 +19,8 @@ use crate::{
 pub struct Processor {
     bracket_stack: BracketStack,
     jsonl_string: JSONLString,
+    inside_string: bool,
+    last_char_escape: bool,
 }
 
 impl Processor {
@@ -27,6 +29,8 @@ impl Processor {
         Processor {
             bracket_stack: BracketStack::new(),
             jsonl_string: JSONLString::new(),
+            inside_string: false,
+            last_char_escape: false,
         }
     }
 
@@ -72,9 +76,21 @@ impl Processor {
     /// ```
     pub fn process_char(&mut self, byte: &char) {
         match byte {
-            b if is_opening_bracket(&b) => self.process_opening_bracket(b),
-            b if is_closing_bracket(&b) => self.process_closing_bracket(b),
+            &'"' => self.process_quote(byte),
+            b if !self.inside_string && is_opening_bracket(&b) => self.process_opening_bracket(b),
+            b if !self.inside_string && is_closing_bracket(&b) => self.process_closing_bracket(b),
             _ => self.process_other_char(byte),
+        }
+
+        self.last_char_escape = byte == &'\\';
+    }
+
+    /// Processes a character that is a quote. This function will add the
+    /// character to the `jsonl_string` and toggle the `inside_string` flag.
+    fn process_quote(&mut self, byte: &char) {
+        self.jsonl_string.push_char(&byte);
+        if !self.last_char_escape {
+            self.inside_string = !self.inside_string;
         }
     }
 
@@ -94,6 +110,7 @@ impl Processor {
 
         if self.should_print() {
             self.jsonl_string.push_char(&byte);
+
             println!("{}", self.jsonl_string);
             self.jsonl_string.clear();
         } else {
@@ -129,6 +146,41 @@ mod tests {
         let mut processor = Processor::new();
         processor.push_bracket(&'[');
         assert_eq!(processor.bracket_stack.stack, vec!['[']);
+    }
+
+    #[test]
+    fn test_processor_process_quote_pushes_quote_to_jsonl_string() {
+        let mut processor = Processor::new();
+        processor.process_quote(&'"');
+        assert_eq!(processor.jsonl_string.to_string(), String::from("\""));
+    }
+
+    #[test]
+    fn test_processor_process_quote_flips_inside_string_flag() {
+        let mut processor = Processor::new();
+        processor.process_quote(&'"');
+        assert_eq!(processor.inside_string, true);
+        processor.process_quote(&'"');
+        assert_eq!(processor.inside_string, false);
+    }
+
+    #[test]
+    fn test_last_char_escape_flag_flipped_on_escape_char() {
+        let mut processor = Processor::new();
+        processor.process_char(&'\\');
+        assert_eq!(processor.last_char_escape, true);
+        processor.process_char(&'a');
+        assert_eq!(processor.last_char_escape, false);
+    }
+
+    #[test]
+    fn test_bracket_inside_str_is_treated_as_string() {
+        let mut processor = Processor::new();
+        processor.process_char(&'"');
+        processor.process_char(&'[');
+        assert_eq!(processor.jsonl_string.to_string(), String::from("\"["));
+        assert_eq!(processor.inside_string, true);
+        assert_eq!(processor.bracket_stack.stack.len(), 0);
     }
 
     #[test]
