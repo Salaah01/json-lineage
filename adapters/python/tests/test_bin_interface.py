@@ -2,13 +2,26 @@ import asyncio
 import platform
 import subprocess
 from types import SimpleNamespace
+from typing import Callable, Union
 from unittest import IsolatedAsyncioTestCase, TestCase
 from unittest.mock import patch
 
-from json_lineage import consumer
+from json_lineage import bin_interface
 from json_lineage.exceptions import BinaryExecutionException
 
 from .helpers import SAMPLE_DATA_PATH
+
+
+class ReaderInstanceMixin:
+    create_reader_instance: Callable[
+        ..., Union[bin_interface.BinaryReader, bin_interface.AsyncBinaryReader]
+    ]
+
+    def setUp(self):
+        self.reader = self.create_reader_instance()
+
+    def tearDown(self):
+        self.reader.kill_subprocess_proc()
 
 
 class TestGetBinPath(TestCase):
@@ -20,7 +33,7 @@ class TestGetBinPath(TestCase):
         Windows.
         """
         self.assertTrue(
-            consumer.get_bin_path().endswith("jsonl_converter.exe"),
+            bin_interface.get_bin_path().endswith("jsonl_converter.exe"),
         )
 
     @patch.object(platform, "system", return_value="Linux")
@@ -29,31 +42,49 @@ class TestGetBinPath(TestCase):
         Linux.
         """
         self.assertTrue(
-            consumer.get_bin_path().endswith("jsonl_converter"),
+            bin_interface.get_bin_path().endswith("jsonl_converter"),
         )
 
 
 class TestBaseBinaryReader(TestCase):
     def test__init__works(self):
         """Test that the `BinaryReader` class can be instantiated."""
-        consumer.BinaryReader("filepath")
+        bin_interface.BinaryReader("filepath")
 
     def test_repr(self):
         """Test that the `__repr__` method returns a string."""
-        reader = consumer.BinaryReader("filepath")
+        reader = bin_interface.BinaryReader("filepath")
         self.assertIsInstance(repr(reader), str)
 
+    def test_kill_subprocess_proc_returns_if_no_proc(self):
+        """Test that the `kill_subprocess_proc` method returns if there is no
+        subprocess.
+        """
+        reader = bin_interface.BinaryReader("filepath")
+        reader.kill_subprocess_proc()
 
-class TestBinaryReader(TestCase):
+    def test_kill_subprocess_proc_closes_files_and_terminates_proc(self):
+        """Test that the `kill_subprocess_proc` method closes the files and
+        terminates the subprocess.
+        """
+        reader = bin_interface.BinaryReader(SAMPLE_DATA_PATH)
+        proc = reader.popen()
+        reader.kill_subprocess_proc()
+        self.assertTrue(proc.stdout.closed)
+        self.assertTrue(proc.stderr.closed)
+        self.assertEqual(proc.poll(), 0)
+
+
+class TestBinaryReader(ReaderInstanceMixin, TestCase):
     """Tests for the `BinaryReader` class."""
 
-    def create_reader_instance(self):
-        return consumer.BinaryReader(SAMPLE_DATA_PATH)
+    @staticmethod
+    def create_reader_instance():
+        return bin_interface.BinaryReader(SAMPLE_DATA_PATH)
 
     def test_popen_returns_popen(self):
         """Test that the `popen` method returns a `subprocess.Popen` object."""
-        reader = self.create_reader_instance()
-        proc = reader.popen()
+        proc = self.reader.popen()
         self.assertIsInstance(proc, subprocess.Popen)
         proc.communicate()
 
@@ -61,8 +92,7 @@ class TestBinaryReader(TestCase):
         """Test that the `popen` method returns a `subprocess.Popen` object
         with a readable stdout.
         """
-        reader = self.create_reader_instance()
-        proc = reader.popen()
+        proc = self.reader.popen()
         self.assertIsNotNone(proc.stdout.readline())
         proc.communicate()
 
@@ -70,23 +100,22 @@ class TestBinaryReader(TestCase):
         """Test that the `popen` method raises a `BinaryExecutionException`
         if the binary returns a stderr.
         """
-        reader = consumer.BinaryReader("invalid_path")
+        reader = bin_interface.BinaryReader("invalid_path")
         with self.assertRaises(BinaryExecutionException):
             reader.popen()
+        reader.kill_subprocess_proc()
 
     def test_iter(self):
         """Test that the `__iter__` method returns a `BinaryIterator`
         object.
         """
-        reader = self.create_reader_instance()
-        self.assertIsInstance(iter(reader), consumer.BinaryIterator)
+        self.assertIsInstance(iter(self.reader), bin_interface.BinaryIterator)
 
     def test_iter_next_valid(self):
         """Test that the `__next__` method iterates over the binary stdout
         correctly.
         """
-        reader = self.create_reader_instance()
-        iterator = iter(reader)
+        iterator = iter(self.reader)
         self.assertEqual(next(iterator), '{"a": {"B": 1},"b": 2}')
         self.assertEqual(next(iterator), '{"a": 1,"b": 2}')
         with self.assertRaises(StopIteration):
@@ -98,96 +127,99 @@ class TestBinaryIterator(TestCase):
 
     def test__iter__returns_instance_of_self(self):
         """Test that the `__iter__` method returns an instance of itself."""
-        iterator = consumer.BinaryIterator(None)
+        iterator = bin_interface.BinaryIterator(None)
         self.assertIs(iter(iterator), iterator)
 
     def test__next__raises_stop_iter_if_no_stdout(self):
         """Test that the `__next__` method raises a `StopIteration` if there
         is no stdout.
         """
-        iterator = consumer.BinaryIterator(SimpleNamespace(stdout=None))
+        iterator = bin_interface.BinaryIterator(
+            SimpleNamespace(stdout=None, stderr=None)
+        )
         with self.assertRaises(StopIteration):
             next(iterator)
 
 
-class TestAsyncBinaryReader(IsolatedAsyncioTestCase):
+class TestAsyncBinaryReader(ReaderInstanceMixin, IsolatedAsyncioTestCase):
     """Tests for the `AsyncBinaryReader` class."""
 
-    def create_reader_instance(self):
-        return consumer.AsyncBinaryReader(SAMPLE_DATA_PATH)
+    @staticmethod
+    def create_reader_instance():
+        return bin_interface.AsyncBinaryReader(SAMPLE_DATA_PATH)
 
     async def test_ppopen_returns_popen(self):
         """Test that the `popen` method returns the correct type of
         instance.
         """
-        reader = self.create_reader_instance()
-        proc = await reader.popen()
+        proc = await self.reader.popen()
         self.assertIsInstance(proc, asyncio.subprocess.Process)
-        proc.communicate()
 
     async def test_ppopen_raises_err_if_stderr_from_bin(self):
         """Test that the `popen` method raises a `BinaryExecutionException`
         if the binary returns a stderr.
         """
-        reader = consumer.AsyncBinaryReader("invalid_path")
+        reader = bin_interface.AsyncBinaryReader("invalid_path")
         with self.assertRaises(BinaryExecutionException):
             await reader.popen()
+        reader.kill_subprocess_proc()
 
-    def test__aiter__returns_async_binary_iterator(self):
+    async def test__aiter__returns_async_binary_iterator(self):
         """Test that the `__aiter__` method returns an `AsyncBinaryIterator`
         object.
         """
-        reader = self.create_reader_instance()
-        self.assertIsInstance(
-            reader.__aiter__(),
-            consumer.AsyncBinaryIterator,
-        )
+        aiter_ = self.reader.__aiter__()
+        await aiter_.__anext__()
+
+        self.assertIsInstance(aiter_, bin_interface.AsyncBinaryIterator)
 
     async def test__anext__valid(self):
         """Test that the `__anext__` method iterates over the binary stdout
         correctly.
         """
-        reader = self.create_reader_instance()
-        iterator = reader.__aiter__()
+        iterator = self.reader.__aiter__()
         self.assertEqual(await iterator.__anext__(), '{"a": {"B": 1},"b": 2}')
         self.assertEqual(await iterator.__anext__(), '{"a": 1,"b": 2}')
         with self.assertRaises(StopAsyncIteration):
             await iterator.__anext__()
 
 
-class TestAsyncBinaryIterator(IsolatedAsyncioTestCase):
+class TestAsyncBinaryIterator(ReaderInstanceMixin, IsolatedAsyncioTestCase):
     """Tests for the `AsyncBinaryIterator` class."""
 
-    def create_reader_instance(self):
-        return consumer.AsyncBinaryReader(SAMPLE_DATA_PATH)
+    @staticmethod
+    def create_reader_instance():
+        return bin_interface.AsyncBinaryReader(SAMPLE_DATA_PATH)
 
     async def test_read_output_reads_stdout_til_exhaustion(self):
         """Test that the `read_output` method reads the stdout until it is
         exhausted.
         """
-        reader = self.create_reader_instance()
-        proc = await reader.popen()
+        proc = await self.reader.popen()
         self.assertEqual(
-            await reader.read_output(proc),
+            await self.reader.read_output(proc),
             '{"a": {"B": 1},"b": 2}',
         )
-        self.assertEqual(await reader.read_output(proc), '{"a": 1,"b": 2}')
-        self.assertEqual(await reader.read_output(proc), "")
-        proc.communicate()
+        self.assertEqual(
+            await self.reader.read_output(proc),
+            '{"a": 1,"b": 2}',
+        )
+        self.assertEqual(await self.reader.read_output(proc), "")
+        self.reader.kill_subprocess_proc()
 
     async def test_read_output_returns_empty_string_if_none_stdout(self):
         """Test that the `read_output` method returns an empty string if the
         stdout is `None`.
         """
-        reader = self.create_reader_instance()
         proc = await asyncio.create_subprocess_exec(
             "echo",
             "test",
             stdout=None,
         )
-        self.assertEqual(await reader.read_output(proc), "")
+        self.assertEqual(await self.reader.read_output(proc), "")
+        self.reader.kill_subprocess_proc()
 
     async def test__aiter__returns_instance_of_self(self):
         """Test that the `__aiter__` method returns an instance of itself."""
-        iterator = consumer.AsyncBinaryIterator(None)
+        iterator = bin_interface.AsyncBinaryIterator(None)
         self.assertIs(await iterator.__aiter__(), iterator)

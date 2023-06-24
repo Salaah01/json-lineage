@@ -4,7 +4,8 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import patch
 
-from json_lineage import cli, consumer
+from json_lineage import cli
+from json_lineage.bin_interface import BinaryReader
 
 from .helpers import SAMPLE_DATA_PATH
 
@@ -27,19 +28,21 @@ class TestPrintLines(TestCase):
         """Test that the `print_lines` function prints the lines from the
         given reader to stdout.
         """
-        reader = consumer.BinaryReader(SAMPLE_DATA_PATH)
+        reader = BinaryReader(SAMPLE_DATA_PATH)
         with patch.object(builtins, "print") as mock_print:
             cli.print_lines(reader)
             self.assertEqual(mock_print.call_count, 2)
+        reader.kill_subprocess_proc()
 
     def test_write_lines(self):
         """Test that the `write_lines` function writes the lines from the
         given reader to the given filepath.
         """
-        reader = consumer.BinaryReader(SAMPLE_DATA_PATH)
+        reader = BinaryReader(SAMPLE_DATA_PATH)
         with tempfile.NamedTemporaryFile() as f:
             cli.write_lines(reader, f.name)
             self.assertEqual(f.read().count(b"\n"), 2)
+        reader.kill_subprocess_proc()
 
 
 class TestMain(TestCase):

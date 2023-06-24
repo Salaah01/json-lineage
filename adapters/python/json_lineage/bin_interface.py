@@ -28,12 +28,31 @@ class BaseBinaryReader:
     def __init__(self, filepath: str):
         self.bin_path = get_bin_path()
         self.file_path = filepath
+        self._proc: _t.Optional[
+            _t.Union[subprocess.Popen, asyncio.subprocess.Process]
+        ] = None
 
     def __repr__(self) -> str:
         return (
             f"<{self.__class__.__name__} bin_path={self.bin_path} "
             f"file_path={self.file_path}>"
         )
+
+    def kill_subprocess_proc(self) -> None:
+        """Kill the subprocess process."""
+        if self._proc is None:
+            return
+
+        for stream in ("stdout", "stderr"):
+            stream = getattr(self._proc, stream)
+            if hasattr(stream, "close"):
+                stream.close()
+
+        try:
+            self._proc.terminate()
+        except ProcessLookupError:
+            pass
+        self._proc = None
 
 
 class BinaryReader(BaseBinaryReader):
@@ -44,18 +63,18 @@ class BinaryReader(BaseBinaryReader):
 
     def popen(self) -> subprocess.Popen:
         """Run the binary and return a Popen object."""
-        proc = subprocess.Popen(
+        self._proc = subprocess.Popen(
             [self.bin_path, self.file_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        if proc.stderr:
-            err = proc.stderr.read()
+        if self._proc.stderr:
+            err = self._proc.stderr.read()
         if err:
             raise BinaryExecutionException(
                 f"Error in subprocess: {err.decode()}",
             )
-        return proc
+        return self._proc
 
 
 class BinaryIterator:
@@ -82,16 +101,16 @@ class AsyncBinaryReader(BaseBinaryReader):
 
     async def popen(self) -> asyncio.subprocess.Process:
         """Run the binary and return a Popen object."""
-        proc = await asyncio.create_subprocess_exec(
+        self._proc = await asyncio.create_subprocess_exec(
             self.bin_path,
             self.file_path,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        err = await proc.stderr.read()  # type: ignore
+        err = await self._proc.stderr.read()  # type: ignore
         if err:
             raise BinaryExecutionException(err)
-        return proc
+        return self._proc
 
     async def read_output(self, process: asyncio.subprocess.Process) -> str:
         if process.stdout is None:
@@ -134,22 +153,3 @@ class AsyncBinaryIterator(BaseBinaryReader):
         if not line:
             return ""
         return line.decode().rstrip()
-
-
-# async def async_test():
-#     bin_path = get_bin_path()
-#     fp = "/home/salaah/json-lineage/sample_data/sample.json"
-#     reader = AsyncBinaryReader(bin_path, fp)
-#     async for line in reader:
-#         print(line)
-
-
-# if __name__ == "__main__":
-#     bin_path = get_bin_path()
-#     fp = "/home/salaah/json-lineage/sample_data/sample.json"
-#     reader = BinaryReader(bin_path, fp)
-#     for line in reader:
-#         print(line)
-# loop = asyncio.get_event_loop()
-# loop.run_until_complete(async_test())
-# loop.close()

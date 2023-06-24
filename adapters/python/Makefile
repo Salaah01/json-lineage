@@ -15,3 +15,4 @@ format:
 
 mypy:
 	mypy -p json_lineage
+	mypy -p tests
