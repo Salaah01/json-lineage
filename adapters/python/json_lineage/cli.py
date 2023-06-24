@@ -4,7 +4,7 @@ adapter.
 
 import argparse
 
-from .consumer import BinaryReader
+from .bin_interface import BinaryReader
 
 
 def parse_args() -> argparse.Namespace:
