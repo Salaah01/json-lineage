@@ -34,28 +34,21 @@ class TestGetBinPath(TestCase):
 
 
 class TestBaseBinaryReader(TestCase):
-    bin_path = consumer.get_bin_path()
-
     def test__init__works(self):
         """Test that the `BinaryReader` class can be instantiated."""
-        consumer.BinaryReader("a", "b")
+        consumer.BinaryReader("filepath")
 
     def test_repr(self):
         """Test that the `__repr__` method returns a string."""
-        reader = consumer.BinaryReader("a", "b")
+        reader = consumer.BinaryReader("filepath")
         self.assertIsInstance(repr(reader), str)
 
 
 class TestBinaryReader(TestCase):
     """Tests for the `BinaryReader` class."""
 
-    bin_path = consumer.get_bin_path()
-
     def create_reader_instance(self):
-        return consumer.BinaryReader(
-            self.bin_path,
-            SAMPLE_DATA_PATH,
-        )
+        return consumer.BinaryReader(SAMPLE_DATA_PATH)
 
     def test_popen_returns_popen(self):
         """Test that the `popen` method returns a `subprocess.Popen` object."""
@@ -77,7 +70,7 @@ class TestBinaryReader(TestCase):
         """Test that the `popen` method raises a `BinaryExecutionException`
         if the binary returns a stderr.
         """
-        reader = consumer.BinaryReader(self.bin_path, "invalid_path")
+        reader = consumer.BinaryReader("invalid_path")
         with self.assertRaises(BinaryExecutionException):
             reader.popen()
 
@@ -120,13 +113,8 @@ class TestBinaryIterator(TestCase):
 class TestAsyncBinaryReader(IsolatedAsyncioTestCase):
     """Tests for the `AsyncBinaryReader` class."""
 
-    bin_path = consumer.get_bin_path()
-
     def create_reader_instance(self):
-        return consumer.AsyncBinaryReader(
-            self.bin_path,
-            SAMPLE_DATA_PATH,
-        )
+        return consumer.AsyncBinaryReader(SAMPLE_DATA_PATH)
 
     async def test_ppopen_returns_popen(self):
         """Test that the `popen` method returns the correct type of
@@ -141,7 +129,7 @@ class TestAsyncBinaryReader(IsolatedAsyncioTestCase):
         """Test that the `popen` method raises a `BinaryExecutionException`
         if the binary returns a stderr.
         """
-        reader = consumer.AsyncBinaryReader(self.bin_path, "invalid_path")
+        reader = consumer.AsyncBinaryReader("invalid_path")
         with self.assertRaises(BinaryExecutionException):
             await reader.popen()
 
@@ -170,13 +158,8 @@ class TestAsyncBinaryReader(IsolatedAsyncioTestCase):
 class TestAsyncBinaryIterator(IsolatedAsyncioTestCase):
     """Tests for the `AsyncBinaryIterator` class."""
 
-    bin_path = consumer.get_bin_path()
-
     def create_reader_instance(self):
-        return consumer.AsyncBinaryReader(
-            self.bin_path,
-            SAMPLE_DATA_PATH,
-        )
+        return consumer.AsyncBinaryReader(SAMPLE_DATA_PATH)
 
     async def test_read_output_reads_stdout_til_exhaustion(self):
         """Test that the `read_output` method reads the stdout until it is

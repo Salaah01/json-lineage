@@ -25,8 +25,8 @@ def get_bin_path() -> str:
 class BaseBinaryReader:
     """Base class for the `BinaryReader` and `AsyncBinaryReader` classes."""
 
-    def __init__(self, bin_path: str, filepath: str):
-        self.bin_path = bin_path
+    def __init__(self, filepath: str):
+        self.bin_path = get_bin_path()
         self.file_path = filepath
 
     def __repr__(self) -> str:
