@@ -1,5 +1,7 @@
 # JSON Linage (In Development)
 
+**Full documentation can be found at the [GitHub Pages](https://salaah01.github.io/json-lineage/) for this project.**
+
 ## Introduction
 
 JSON Linage is a tool that allows you to coverage JSON to JSONL (JSON Lines) format as well as iteratively parse JSON where the JSON contains a list of objects.
