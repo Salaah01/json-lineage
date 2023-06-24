@@ -1,0 +1,15 @@
+[tool.black]
+line-length = 79
+
+[tool.my-py]
+explicit_package_bases = true
+
+[tool.coverage.run]
+omit = [
+  "*test*",
+]
+
+[tool.coverage.report]
+omit = [
+  "*test*",
+]

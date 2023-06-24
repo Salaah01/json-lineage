@@ -1,0 +1,6 @@
+{
+  "black-formatter.importStrategy": "fromEnvironment",
+  "black-formatter.args": [
+    "--line-length=79"
+  ]
+}
