@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"jsonl_converter":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.70.0/core/iter/traits/exact_size/trait.ExactSizeIterator.html\" title=\"trait core::iter::traits::exact_size::ExactSizeIterator\">ExactSizeIterator</a> for <a class=\"struct\" href=\"jsonl_converter/brackets/struct.BracketStack.html\" title=\"struct jsonl_converter::brackets::BracketStack\">BracketStack</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
