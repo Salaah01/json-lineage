@@ -82,7 +82,14 @@ impl Processor {
             _ => self.process_other_char(byte),
         }
 
-        self.last_char_escape = byte == &'\\';
+        self.update_last_char_escape(byte);
+    }
+
+    /// If the current character is an escape character, this function will
+    /// set the `last_char_escape` flag to `true` unless the previous character
+    /// was also an escape character
+    fn update_last_char_escape(&mut self, byte: &char) {
+        self.last_char_escape = byte == &'\\' && !self.last_char_escape;
     }
 
     /// Processes a character that is a quote. This function will add the
