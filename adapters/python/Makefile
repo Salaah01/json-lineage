@@ -16,3 +16,9 @@ format:
 mypy:
 	mypy -p json_lineage
 	mypy -p tests
+
+build:
+	python3 setup.py sdist bdist_wheel
+
+upload:
+	twine upload dist/*

@@ -288,6 +288,65 @@
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module contains the functionality to process a stream of bytes to
 //! convert JSON to JSONL.
 
@@ -309,6 +368,8 @@
 </span><span class="kw">pub struct </span>Processor {
     bracket_stack: BracketStack,
     jsonl_string: JSONLString,
+    inside_string: bool,
+    last_char_escape: bool,
 }
 
 <span class="kw">impl </span>Processor {
@@ -317,6 +378,8 @@
         Processor {
             bracket_stack: BracketStack::new(),
             jsonl_string: JSONLString::new(),
+            inside_string: <span class="bool-val">false</span>,
+            last_char_escape: <span class="bool-val">false</span>,
         }
     }
 
@@ -362,9 +425,28 @@
     /// ```
     </span><span class="kw">pub fn </span>process_char(<span class="kw-2">&amp;mut </span><span class="self">self</span>, byte: <span class="kw-2">&amp;</span>char) {
         <span class="kw">match </span>byte {
-            b <span class="kw">if </span>is_opening_bracket(<span class="kw-2">&amp;</span>b) =&gt; <span class="self">self</span>.process_opening_bracket(b),
-            b <span class="kw">if </span>is_closing_bracket(<span class="kw-2">&amp;</span>b) =&gt; <span class="self">self</span>.process_closing_bracket(b),
+            <span class="kw-2">&amp;</span><span class="string">&#39;&quot;&#39; </span>=&gt; <span class="self">self</span>.process_quote(byte),
+            b <span class="kw">if </span>!<span class="self">self</span>.inside_string &amp;&amp; is_opening_bracket(<span class="kw-2">&amp;</span>b) =&gt; <span class="self">self</span>.process_opening_bracket(b),
+            b <span class="kw">if </span>!<span class="self">self</span>.inside_string &amp;&amp; is_closing_bracket(<span class="kw-2">&amp;</span>b) =&gt; <span class="self">self</span>.process_closing_bracket(b),
             <span class="kw">_ </span>=&gt; <span class="self">self</span>.process_other_char(byte),
+        }
+
+        <span class="self">self</span>.update_last_char_escape(byte);
+    }
+
+    <span class="doccomment">/// If the current character is an escape character, this function will
+    /// set the `last_char_escape` flag to `true` unless the previous character
+    /// was also an escape character
+    </span><span class="kw">fn </span>update_last_char_escape(<span class="kw-2">&amp;mut </span><span class="self">self</span>, byte: <span class="kw-2">&amp;</span>char) {
+        <span class="self">self</span>.last_char_escape = byte == <span class="kw-2">&amp;</span><span class="string">&#39;\\&#39; </span>&amp;&amp; !<span class="self">self</span>.last_char_escape;
+    }
+
+    <span class="doccomment">/// Processes a character that is a quote. This function will add the
+    /// character to the `jsonl_string` and toggle the `inside_string` flag.
+    </span><span class="kw">fn </span>process_quote(<span class="kw-2">&amp;mut </span><span class="self">self</span>, byte: <span class="kw-2">&amp;</span>char) {
+        <span class="self">self</span>.jsonl_string.push_char(<span class="kw-2">&amp;</span>byte);
+        <span class="kw">if </span>!<span class="self">self</span>.last_char_escape {
+            <span class="self">self</span>.inside_string = !<span class="self">self</span>.inside_string;
         }
     }
 
@@ -384,6 +466,7 @@
 
         <span class="kw">if </span><span class="self">self</span>.should_print() {
             <span class="self">self</span>.jsonl_string.push_char(<span class="kw-2">&amp;</span>byte);
+
             <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.jsonl_string);
             <span class="self">self</span>.jsonl_string.clear();
         } <span class="kw">else </span>{
@@ -419,6 +502,41 @@
         <span class="kw">let </span><span class="kw-2">mut </span>processor = Processor::new();
         processor.push_bracket(<span class="kw-2">&amp;</span><span class="string">&#39;[&#39;</span>);
         <span class="macro">assert_eq!</span>(processor.bracket_stack.stack, <span class="macro">vec!</span>[<span class="string">&#39;[&#39;</span>]);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_processor_process_quote_pushes_quote_to_jsonl_string() {
+        <span class="kw">let </span><span class="kw-2">mut </span>processor = Processor::new();
+        processor.process_quote(<span class="kw-2">&amp;</span><span class="string">&#39;&quot;&#39;</span>);
+        <span class="macro">assert_eq!</span>(processor.jsonl_string.to_string(), String::from(<span class="string">&quot;\&quot;&quot;</span>));
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_processor_process_quote_flips_inside_string_flag() {
+        <span class="kw">let </span><span class="kw-2">mut </span>processor = Processor::new();
+        processor.process_quote(<span class="kw-2">&amp;</span><span class="string">&#39;&quot;&#39;</span>);
+        <span class="macro">assert_eq!</span>(processor.inside_string, <span class="bool-val">true</span>);
+        processor.process_quote(<span class="kw-2">&amp;</span><span class="string">&#39;&quot;&#39;</span>);
+        <span class="macro">assert_eq!</span>(processor.inside_string, <span class="bool-val">false</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_last_char_escape_flag_flipped_on_escape_char() {
+        <span class="kw">let </span><span class="kw-2">mut </span>processor = Processor::new();
+        processor.process_char(<span class="kw-2">&amp;</span><span class="string">&#39;\\&#39;</span>);
+        <span class="macro">assert_eq!</span>(processor.last_char_escape, <span class="bool-val">true</span>);
+        processor.process_char(<span class="kw-2">&amp;</span><span class="string">&#39;a&#39;</span>);
+        <span class="macro">assert_eq!</span>(processor.last_char_escape, <span class="bool-val">false</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_bracket_inside_str_is_treated_as_string() {
+        <span class="kw">let </span><span class="kw-2">mut </span>processor = Processor::new();
+        processor.process_char(<span class="kw-2">&amp;</span><span class="string">&#39;&quot;&#39;</span>);
+        processor.process_char(<span class="kw-2">&amp;</span><span class="string">&#39;[&#39;</span>);
+        <span class="macro">assert_eq!</span>(processor.jsonl_string.to_string(), String::from(<span class="string">&quot;\&quot;[&quot;</span>));
+        <span class="macro">assert_eq!</span>(processor.inside_string, <span class="bool-val">true</span>);
+        <span class="macro">assert_eq!</span>(processor.bracket_stack.stack.len(), <span class="number">0</span>);
     }
 
     <span class="attr">#[test]
