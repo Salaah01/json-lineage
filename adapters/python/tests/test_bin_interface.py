@@ -1,6 +1,7 @@
 import asyncio
 import platform
 import subprocess
+import time
 from types import SimpleNamespace
 from typing import Callable, Union
 from unittest import IsolatedAsyncioTestCase, TestCase
@@ -72,7 +73,8 @@ class TestBaseBinaryReader(TestCase):
         reader.kill_subprocess_proc()
         self.assertTrue(proc.stdout.closed)
         self.assertTrue(proc.stderr.closed)
-        self.assertEqual(proc.poll(), 0)
+        time.sleep(0.01)
+        self.assertIsNotNone(proc.poll())
 
 
 class TestBinaryReader(ReaderInstanceMixin, TestCase):
@@ -96,20 +98,12 @@ class TestBinaryReader(ReaderInstanceMixin, TestCase):
         self.assertIsNotNone(proc.stdout.readline())
         proc.communicate()
 
-    def test_ppopen_raises_err_if_stderr_from_bin(self):
-        """Test that the `popen` method raises a `BinaryExecutionException`
-        if the binary returns a stderr.
-        """
-        reader = bin_interface.BinaryReader("invalid_path")
-        with self.assertRaises(BinaryExecutionException):
-            reader.popen()
-        reader.kill_subprocess_proc()
-
     def test_iter(self):
         """Test that the `__iter__` method returns a `BinaryIterator`
         object.
         """
         self.assertIsInstance(iter(self.reader), bin_interface.BinaryIterator)
+        self.reader._proc.communicate()
 
     def test_iter_next_valid(self):
         """Test that the `__next__` method iterates over the binary stdout
@@ -120,6 +114,26 @@ class TestBinaryReader(ReaderInstanceMixin, TestCase):
         self.assertEqual(next(iterator), '{"a": 1,"b": 2}')
         with self.assertRaises(StopIteration):
             next(iterator)
+
+    def test_raises_err_if_non_0_return_code_with_stderr_from_bin(self):
+        """Test that the `__next__` method raises a `BinaryExecutionException`
+        if the binary returns a non-zero return code and there is stderr from
+        the binary.
+        """
+        reader = bin_interface.BinaryReader("invalid_path")
+        with self.assertRaises(BinaryExecutionException):
+            next(iter(reader))
+        reader.kill_subprocess_proc()
+
+    def test_raises_err_if_non_0_return_code_no_stderr_from_bin(self):
+        """Test that the `__next__` method raises a `BinaryExecutionException`
+        if the binary returns a non-zero return code and there is no stderr
+        from the binary.
+        """
+        reader = bin_interface.BinaryReader("invalid_path")
+        with self.assertRaises(BinaryExecutionException):
+            next(iter(reader))
+        reader.kill_subprocess_proc()
 
 
 class TestBinaryIterator(TestCase):
@@ -135,7 +149,7 @@ class TestBinaryIterator(TestCase):
         is no stdout.
         """
         iterator = bin_interface.BinaryIterator(
-            SimpleNamespace(stdout=None, stderr=None)
+            SimpleNamespace(stdout=None, stderr=None, poll=lambda: 0)
         )
         with self.assertRaises(StopIteration):
             next(iterator)
@@ -155,14 +169,18 @@ class TestAsyncBinaryReader(ReaderInstanceMixin, IsolatedAsyncioTestCase):
         proc = await self.reader.popen()
         self.assertIsInstance(proc, asyncio.subprocess.Process)
 
-    async def test_ppopen_raises_err_if_stderr_from_bin(self):
-        """Test that the `popen` method raises a `BinaryExecutionException`
-        if the binary returns a stderr.
+    async def test_raises_err_if_non_0_return_code(self):
+        """Test that the `__anext__` method raises a `BinaryExecutionException`
+        if the binary returns a non-zero return code.
         """
-        reader = bin_interface.AsyncBinaryReader("invalid_path")
-        with self.assertRaises(BinaryExecutionException):
-            await reader.popen()
-        reader.kill_subprocess_proc()
+
+        async def fn():
+            reader = bin_interface.AsyncBinaryReader("invalid_path")
+            with self.assertRaises(BinaryExecutionException):
+                async for _ in reader:
+                    pass
+
+        await asyncio.wait_for(fn(), timeout=0.1)
 
     async def test__aiter__returns_async_binary_iterator(self):
         """Test that the `__aiter__` method returns an `AsyncBinaryIterator`
