@@ -210,3 +210,4 @@ Cargo.lock
 # End of https://www.toptal.com/developers/gitignore/api/rust,python,visualstudiocode
 
 tmp.*
+sample_data/324mb_sample.json
