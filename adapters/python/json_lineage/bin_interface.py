@@ -67,13 +67,8 @@ class BinaryReader(BaseBinaryReader):
             [self.bin_path, self.file_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            universal_newlines=True,
         )
-        if self._proc.stderr:
-            err = self._proc.stderr.read()
-        if err:
-            raise BinaryExecutionException(
-                f"Error in subprocess: {err.decode()}",
-            )
         return self._proc
 
 
@@ -87,13 +82,28 @@ class BinaryIterator:
         return self
 
     def __next__(self) -> str:
+        self.raise_err_if_stderr()
+
         if self.process.stdout is None:
             raise StopIteration
-        line = self.process.stdout.readline().strip().decode()
-        if not line:
+        line = self.process.stdout.readline().strip()
+        self.raise_err_if_stderr()
+        if not line and self.process.poll() is not None:
             raise StopIteration
 
         return line
+
+    def raise_err_if_stderr(self) -> None:
+        """Raise an exception if the process has exited with a non-zero
+        code.
+        """
+        if self.process.poll() is not None and self.process.poll() != 0:
+            if self.process.stderr is None:
+                raise BinaryExecutionException(
+                    f"Process exited with code {self.process.poll()}"
+                )
+            else:
+                raise BinaryExecutionException(self.process.stderr.read())
 
 
 class AsyncBinaryReader(BaseBinaryReader):
@@ -107,9 +117,6 @@ class AsyncBinaryReader(BaseBinaryReader):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        err = await self._proc.stderr.read()  # type: ignore
-        if err:
-            raise BinaryExecutionException(err)
         return self._proc
 
     async def read_output(self, process: asyncio.subprocess.Process) -> str:
@@ -126,7 +133,7 @@ class AsyncBinaryReader(BaseBinaryReader):
         return AsyncBinaryIterator(self.popen())
 
 
-class AsyncBinaryIterator(BaseBinaryReader):
+class AsyncBinaryIterator:
     def __init__(self, process_coro: Coroutine):
         self.process_coro = process_coro
         self.process: asyncio.subprocess.Process | None = None
@@ -135,12 +142,14 @@ class AsyncBinaryIterator(BaseBinaryReader):
         return self
 
     async def __anext__(self) -> str:
-        if not self.process:
+        if self.process is None:
             self.process = await _t.cast(
                 Awaitable[asyncio.subprocess.Process],
                 self.process_coro,
             )
         output = await self.read_output(self.process)
+        await self.raise_err_if_stderr()
+
         if not output:
             raise StopAsyncIteration
 
@@ -153,3 +162,16 @@ class AsyncBinaryIterator(BaseBinaryReader):
         if not line:
             return ""
         return line.decode().rstrip()
+
+    async def raise_err_if_stderr(self):
+        if (
+            self.process.returncode is not None
+            and self.process.returncode != 0
+        ):
+            err = await self.process.stderr.read()
+            if err:
+                raise BinaryExecutionException(err)
+            else:
+                raise BinaryExecutionException(
+                    f"Process exited with code {self.process.returncode}"
+                )
