@@ -211,3 +211,4 @@ Cargo.lock
 
 tmp.*
 sample_data/324mb_sample.json
+sample_data/32mb_sample.json
