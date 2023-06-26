@@ -4,7 +4,7 @@
 
 use std::{
     fs::File,
-    io::{self, BufReader, Read},
+    io::{self, BufRead, BufReader, Read},
 };
 
 /// Verifies that the first character of the file is a '['.
@@ -45,14 +45,15 @@ pub struct ByteIterator {
 }
 
 impl ByteIterator {
-    /// Creates a new `ByteIterator` from a file.
-    /// 
+    /// Creates a new `ByteIterator` from a file. This is used to iterate over
+    /// the bytes of a file.
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `filename` - The name of the file.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// * If the file cannot be opened.
     pub fn new(filename: &str) -> io::Result<Self> {
         let file = File::open(filename)?;
@@ -80,25 +81,62 @@ impl Iterator for ByteIterator {
     }
 }
 
+pub struct LineIterator {
+    reader: BufReader<File>,
+}
+
+impl LineIterator {
+    pub fn new(filename: &str) -> io::Result<Self> {
+        let file = File::open(filename)?;
+        let reader = BufReader::new(file);
+        Ok(Self { reader })
+    }
+
+    /// Returns the next line of the file.
+    pub fn next_line(&mut self) -> Option<String> {
+        let mut buffer = String::new();
+        match self.reader.read_line(&mut buffer) {
+            Ok(s) => {
+                if s == 0 {
+                    return None;
+                }
+                Some(buffer)
+            }
+            Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => None,
+            Err(_) => None,
+            _ => None,
+        }
+    }
+}
+
+impl Iterator for LineIterator {
+    type Item = String;
+
+    /// Returns the next line of the file.
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next_line()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_bytes_iterator_new_instance_accepts_valid_filename() {
+    fn test_byte_iter_new_instance_accepts_valid_filename() {
         let bytes_iter = ByteIterator::new("src/reader.rs");
         assert!(bytes_iter.is_ok());
     }
 
     #[test]
     #[should_panic]
-    fn test_bytes_iterator_new_instance_panics_on_invalid_filename() {
+    fn test_byte_iter_new_instance_panics_on_invalid_filename() {
         let bytes_iter = ByteIterator::new("bad_filename");
         assert!(bytes_iter.is_ok());
     }
 
     #[test]
-    fn test_can_iterate_over_bytes() {
+    fn test_byte_iter_can_iterate_over_bytes() {
         let bytes_iter = ByteIterator::new("src/reader.rs").unwrap();
         let mut bytes = String::new();
 
@@ -107,6 +145,36 @@ mod tests {
         }
 
         assert_eq!(bytes, include_str!("reader.rs"));
+    }
+
+    #[test]
+    fn test_line_iter_new_instance_accepts_valid_filename() {
+        let line_iter = LineIterator::new("src/reader.rs");
+        assert!(line_iter.is_ok());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_line_iter_new_instance_panics_on_invalid_filename() {
+        let line_iter = LineIterator::new("bad_filename");
+        assert!(line_iter.is_ok());
+    }
+
+    #[test]
+    fn test_line_iter_can_iterate_over_lines() {
+        let fp = "tests/line_iter_testcase.txt";
+        let line_iter = LineIterator::new(fp).unwrap();
+        let mut lines = String::new();
+
+        for line in line_iter {
+            println!("{}", line);
+            lines.push_str(&line);
+        }
+
+        assert_eq!(
+            lines,
+            "This is line 1\n  This is line 2\nThis is line 3  \n"
+        );
     }
 
     #[test]
