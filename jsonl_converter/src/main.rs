@@ -1,8 +1,9 @@
 extern crate jsonl_converter;
 
 use jsonl_converter::cli::get_filepath;
-use jsonl_converter::processor::Processor;
-use jsonl_converter::reader::{verify_first_char, ByteIterator};
+use jsonl_converter::processors::byte_processor::ByteProcessor;
+use jsonl_converter::readers::byte_iter::ByteIterator;
+use jsonl_converter::readers::utils::verify_first_char;
 
 fn main() {
     let mut bytes_iter = ByteIterator::new(&get_filepath()).unwrap();
@@ -10,7 +11,7 @@ fn main() {
 
     verify_first_char(&first_char);
 
-    let mut processor = Processor::new();
+    let mut processor = ByteProcessor::new();
     processor.push_bracket(&first_char);
 
     for byte in bytes_iter {
