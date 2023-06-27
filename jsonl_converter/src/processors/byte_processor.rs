@@ -14,10 +14,8 @@ use crate::{
 ///
 /// * `bracket_stack` - A stack of brackets that have been opened but not closed.
 /// * `jsonl_string` - The JSONL string that is being built.
-///
-/// # Examples
 pub struct ByteProcessor {
-    bracket_stack: BracketStack,
+    pub bracket_stack: BracketStack,
     jsonl_string: JSONLString,
     inside_string: bool,
     last_char_escape: bool,

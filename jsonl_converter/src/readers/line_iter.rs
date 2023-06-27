@@ -26,7 +26,6 @@ impl LineIterator {
             }
             Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => None,
             Err(_) => None,
-            _ => None,
         }
     }
 }

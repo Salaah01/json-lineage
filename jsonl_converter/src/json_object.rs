@@ -80,7 +80,7 @@ impl JSONLString {
 impl fmt::Display for JSONLString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let result = self.clean_re_pattern.replace_all(&self.string, "");
-        write!(f, "{}", result.to_string().trim_start_matches(','))
+        write!(f, "{}", result.to_string().trim_start_matches(',').trim_end_matches(','))
     }
 }
 

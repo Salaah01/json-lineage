@@ -17,7 +17,7 @@ FP = os.path.join(
     "..",
     "..",
     "sample_data",
-    "32mb_sample.json",
+    "324mb_sample.json",
 )
 
 
