@@ -5,19 +5,20 @@ It compares the time and memory usage of the two libraries when loading a JSON
 file.
 """
 
+import asyncio
 import json
 import os
 import resource
 import timeit
 
-from json_lineage import load
+from json_lineage import aload, load
 
 FP = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
     "..",
     "sample_data",
-    "32mb_sample.json",
+    "50kb_sample.json",
 )
 
 
@@ -29,6 +30,15 @@ def using_rust_lib():
 def using_python_lib():
     for i in json.load(open(FP)):
         i
+
+
+async def using_rust_lib_async():
+    async for i in aload(FP):
+        i
+
+
+def async_main():
+    asyncio.run(using_rust_lib_async())
 
 
 def benchmark(fn):

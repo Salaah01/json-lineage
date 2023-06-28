@@ -11,11 +11,11 @@ __all__ = [
 ]
 
 
-def load(fp: str) -> BinaryReader:
+def load(fp: str, *, messy: bool = False) -> BinaryReader:
     """Return a `BinaryReader` object for the given file path."""
-    return BinaryReader(fp)
+    return BinaryReader(fp, messy)
 
 
-def aload(fp: str) -> AsyncBinaryReader:
+def aload(fp: str, *, messy: bool = False) -> AsyncBinaryReader:
     """Return an `AsyncBinaryReader` object for the given file path."""
-    return AsyncBinaryReader(fp)
+    return AsyncBinaryReader(fp, messy)

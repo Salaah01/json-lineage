@@ -14,19 +14,17 @@ use crate::{
 ///
 /// * `bracket_stack` - A stack of brackets that have been opened but not closed.
 /// * `jsonl_string` - The JSONL string that is being built.
-///
-/// # Examples
-pub struct Processor {
-    bracket_stack: BracketStack,
+pub struct ByteProcessor {
+    pub bracket_stack: BracketStack,
     jsonl_string: JSONLString,
     inside_string: bool,
     last_char_escape: bool,
 }
 
-impl Processor {
-    /// Creates a new instance of `Processor`.
+impl ByteProcessor {
+    /// Creates a new instance of `ByteProcessor`.
     pub fn new() -> Self {
-        Processor {
+        ByteProcessor {
             bracket_stack: BracketStack::new(),
             jsonl_string: JSONLString::new(),
             inside_string: false,
@@ -43,9 +41,9 @@ impl Processor {
     /// # Examples
     ///
     /// ```
-    /// use jsonl_converter::processor::Processor;
+    /// use jsonl_converter::processors::byte_processor::ByteProcessor;
     ///
-    /// let mut processor = Processor::new();
+    /// let mut processor = ByteProcessor::new();
     /// processor.push_bracket(&'[');
     /// ```
     pub fn push_bracket(&mut self, byte: &char) {
@@ -64,9 +62,9 @@ impl Processor {
     /// # Examples
     ///
     /// ```
-    /// use jsonl_converter::processor::Processor;
+    /// use jsonl_converter::processors::byte_processor::ByteProcessor;
     ///
-    /// let mut processor = Processor::new();
+    /// let mut processor = ByteProcessor::new();
     /// processor.push_bracket(&'[');
     /// processor.process_char(&'{');
     /// processor.process_char(&'a');
@@ -144,27 +142,27 @@ mod tests {
 
     #[test]
     fn test_processor_new_returns_processor_with_empty_attrs() {
-        let processor = Processor::new();
+        let processor = ByteProcessor::new();
         assert_eq!(processor.bracket_stack.is_empty(), true);
     }
 
     #[test]
     fn test_processor_push_bracket_adds_bracket_to_bracket_stack() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.push_bracket(&'[');
         assert_eq!(processor.bracket_stack.stack, vec!['[']);
     }
 
     #[test]
     fn test_processor_process_quote_pushes_quote_to_jsonl_string() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.process_quote(&'"');
         assert_eq!(processor.jsonl_string.to_string(), String::from("\""));
     }
 
     #[test]
     fn test_processor_process_quote_flips_inside_string_flag() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.process_quote(&'"');
         assert_eq!(processor.inside_string, true);
         processor.process_quote(&'"');
@@ -173,7 +171,7 @@ mod tests {
 
     #[test]
     fn test_last_char_escape_flag_flipped_on_escape_char() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.process_char(&'\\');
         assert_eq!(processor.last_char_escape, true);
         processor.process_char(&'a');
@@ -182,7 +180,7 @@ mod tests {
 
     #[test]
     fn test_bracket_inside_str_is_treated_as_string() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.process_char(&'"');
         processor.process_char(&'[');
         assert_eq!(processor.jsonl_string.to_string(), String::from("\"["));
@@ -192,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_process_opening_bracket() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.process_opening_bracket(&'[');
         assert_eq!(processor.bracket_stack.stack, vec!['[']);
         assert_eq!(processor.jsonl_string.to_string(), String::from("["));
@@ -200,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_process_opening_bracket_recognises_entire_line_not_ready() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.bracket_stack.push(&'[');
         processor.bracket_stack.push(&'{');
         processor.bracket_stack.push(&'{');
@@ -216,7 +214,7 @@ mod tests {
 
     #[test]
     fn test_process_opening_bracket_recognises_line_is_ready() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.bracket_stack.push(&'[');
         processor.bracket_stack.push(&'{');
         processor.jsonl_string.push_str(&"{'a': {'a': 1}");
@@ -230,7 +228,7 @@ mod tests {
 
     #[test]
     fn test_process_other_char_pushes_char_to_jsonl_string() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.process_other_char(&'a');
         assert_eq!(processor.jsonl_string.to_string(), String::from("a"));
         assert_eq!(processor.bracket_stack.len(), 0);
@@ -238,14 +236,14 @@ mod tests {
 
     #[test]
     fn test_should_print_true_if_bracket_stack_len_1() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.bracket_stack.push(&'[');
         assert_eq!(processor.should_print(), true);
     }
 
     #[test]
     fn test_should_print_false_if_bracket_stack_len_not_1() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.bracket_stack.push(&'[');
         processor.bracket_stack.push(&'{');
         assert_eq!(processor.should_print(), false);
@@ -253,7 +251,7 @@ mod tests {
 
     #[test]
     fn test_process_char_flow_with_curly_inner_bracket() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.bracket_stack.push(&'[');
 
         // {
@@ -301,7 +299,7 @@ mod tests {
 
     #[test]
     fn test_process_char_flow_with_square_inner_bracket() {
-        let mut processor = Processor::new();
+        let mut processor = ByteProcessor::new();
         processor.bracket_stack.push(&'[');
 
         // [
