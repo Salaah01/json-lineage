@@ -3,6 +3,7 @@
 
 use core::fmt;
 use regex::Regex;
+use std::ops::Deref;
 
 /// This struct represents a JSONL string being built.
 ///
@@ -14,6 +15,14 @@ use regex::Regex;
 pub struct JSONLString {
     string: String,
     clean_re_pattern: Regex,
+}
+
+impl Deref for JSONLString {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.string
+    }
 }
 
 impl JSONLString {
@@ -80,7 +89,14 @@ impl JSONLString {
 impl fmt::Display for JSONLString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let result = self.clean_re_pattern.replace_all(&self.string, "");
-        write!(f, "{}", result.to_string().trim_start_matches(',').trim_end_matches(','))
+        write!(
+            f,
+            "{}",
+            result
+                .to_string()
+                .trim_start_matches(',')
+                .trim_end_matches(',')
+        )
     }
 }
 
@@ -128,5 +144,12 @@ mod tests {
         let mut jsonl_string = JSONLString::new();
         jsonl_string.push_str(",\n{\"a\": 1}");
         assert_eq!(jsonl_string.to_string(), "{\"a\": 1}");
+    }
+
+    #[test]
+    fn test_jsonl_len_returns_string_length() {
+        let mut jsonl_string = JSONLString::new();
+        jsonl_string.push_str("abc");
+        assert_eq!(jsonl_string.len(), 3);
     }
 }

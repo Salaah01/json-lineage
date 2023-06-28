@@ -19,7 +19,7 @@ use crate::{
 
 pub struct LineProcessor {
     pub bracket_stack: BracketStack,
-    jsonl_string: JSONLString,
+    pub jsonl_string: JSONLString,
 }
 
 impl LineProcessor {
@@ -42,41 +42,43 @@ impl LineProcessor {
     /// ```
     /// use jsonl_converter::processors::line_processor::LineProcessor;
     ///
-    /// let mut processor = ByteProcessor::new();
+    /// let mut processor = LineProcessor::new();
     /// processor.push_bracket(&'[');
+    /// assert_eq!(processor.bracket_stack.len(), 1);
     /// ```
     pub fn push_bracket(&mut self, byte: &char) {
         self.bracket_stack.push(&byte);
     }
 
+    /// Processes a line of a file. Whilst processing the line, it checks if
+    /// their are any brackets. Keeping a track of the brackets allows it to
+    /// determine when a JSON object has been fully read.
+    /// If the JSON object has been fully read, then the JSON object is printed
+    /// to stdout.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - A line of a file.
     pub fn process_line(&mut self, line: &str) {
         let line = line.trim().to_owned();
-        // println!("\n\nNew Line");
 
-        // println!("process_line line: {}", line);
         let start_char = line.chars().next().unwrap();
         let end_char = self.get_end_char(&line);
 
-        // println!("start_char: {}, end_char: {}", start_char, end_char);
-
-        if is_closing_bracket(&start_char) {
-            // println!("closing bracket for start_char: {}", start_char);
-            self.bracket_stack.pop_pair(&start_char);
-        }
-
         if is_opening_bracket(&start_char) {
-            // println!("opening bracket for start_char: {}", start_char);
             self.push_bracket(&start_char);
         }
 
         if is_closing_bracket(&end_char) {
-            // println!("closing bracket for end_char: {}", end_char);
             self.bracket_stack.pop_pair(&end_char);
         }
 
         if is_opening_bracket(&end_char) {
-            // println!("opening bracket for end_char: {}", end_char);
             self.push_bracket(&end_char);
+        }
+
+        if is_closing_bracket(&start_char) {
+            self.bracket_stack.pop_pair(&start_char);
         }
 
         self.jsonl_string.push_str(&line);
@@ -95,7 +97,7 @@ impl LineProcessor {
         if cleaned_line.len() == 1 {
             return ' ';
         }
-        let last_char = line.chars().last().unwrap();
+        let last_char = cleaned_line.chars().last().unwrap();
         if is_closing_bracket(&last_char) {
             // check if the bracket before is the corresponding opening bracket
             let second_to_last_char = cleaned_line.chars().rev().nth(1).unwrap();
@@ -110,5 +112,107 @@ impl LineProcessor {
     /// `bracket_stack` is empty (except for the initial opening bracket).
     fn should_print(&mut self) -> bool {
         self.bracket_stack.len() == 1
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_returns_processor_with_empty_attrs() {
+        let processor = LineProcessor::new();
+        assert_eq!(processor.bracket_stack.len(), 0);
+        assert_eq!(processor.jsonl_string.len(), 0);
+    }
+
+    #[test]
+    fn test_get_end_char_returns_empty_char_when_line_is_one_char() {
+        let processor = LineProcessor::new();
+        let line = "{";
+        assert_eq!(processor.get_end_char(&line), ' ');
+    }
+
+    #[test]
+    fn test_get_end_char_returns_second_to_last_char_if_ends_with_comma() {
+        let processor = LineProcessor::new();
+        let line = "  \"name\": \"John\",";
+        assert_eq!(processor.get_end_char(&line), '"');
+    }
+
+    #[test]
+    fn test_get_end_char_returns_last_char_if_does_not_end_with_comma() {
+        let processor = LineProcessor::new();
+        let line = "  \"name\": \"John\"";
+        assert_eq!(processor.get_end_char(&line), '"');
+    }
+
+    #[test]
+    fn test_get_end_char_returns_empty_str_if_len_2_and_last_char_is_comma() {
+        let processor = LineProcessor::new();
+        let line = "{,";
+        assert_eq!(processor.get_end_char(&line), ' ');
+    }
+
+    #[test]
+    fn test_get_end_char_returns_str_if_last_two_open_and_close() {
+        let processor = LineProcessor::new();
+        let line = "cars: [],";
+        assert_eq!(processor.get_end_char(&line), ' ');
+    }
+
+    #[test]
+    fn test_process_line_returns_object_when_filled() {
+        let mut processor = LineProcessor::new();
+
+        processor.process_line("[");
+        assert_eq!(processor.bracket_stack.stack, vec!['[']);
+
+        processor.process_line("  {");
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{']);
+
+        processor.process_line("    \"name\": \"John\",");
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{']);
+
+        processor.process_line("    \"age\": 30,");
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{']);
+
+        processor.process_line("    \"cars\": [");
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{', '[']);
+
+        processor.process_line("    \"cars\": [");
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{', '[', '[']);
+
+        processor.process_line(
+            "      { \"name\": \"Ford\", \"models\": [ \"Fiesta\", \"Focus\", \"Mustang\" ] },",
+        );
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{', '[', '[']);
+
+        processor
+            .process_line("      { \"name\": \"BMW\", \"models\": [ \"320\", \"X3\", \"X5\" ] },");
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{', '[', '[']);
+
+        processor.process_line("      { \"name\": \"Fiat\", \"models\": [ \"500\", \"Panda\" ] }");
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{', '[', '[']);
+
+        processor.process_line("    ]");
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{', '[']);
+
+        processor.process_line("  ]");
+        assert_eq!(processor.should_print(), false);
+        assert_eq!(processor.bracket_stack.stack, vec!['[', '{']);
+
+        processor.process_line("}");
+        assert_eq!(processor.should_print(), true);
+        assert_eq!(processor.bracket_stack.stack, vec!['[']);
     }
 }
