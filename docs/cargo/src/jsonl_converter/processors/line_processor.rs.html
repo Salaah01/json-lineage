@@ -278,7 +278,7 @@
     ///
     /// * `line` - A line of a file.
     </span><span class="kw">pub fn </span>process_line(<span class="kw-2">&amp;mut </span><span class="self">self</span>, line: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">let </span>line = line.trim().to_owned();
+        <span class="kw">let </span>line = line.trim();
 
         <span class="kw">let </span>start_char = line.chars().next().unwrap();
         <span class="kw">let </span>end_char = <span class="self">self</span>.get_end_char(<span class="kw-2">&amp;</span>line);

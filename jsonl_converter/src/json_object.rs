@@ -93,7 +93,6 @@ impl fmt::Display for JSONLString {
             f,
             "{}",
             result
-                .to_string()
                 .trim_start_matches(',')
                 .trim_end_matches(',')
         )

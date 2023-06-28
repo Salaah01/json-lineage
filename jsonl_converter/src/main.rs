@@ -8,9 +8,8 @@ use jsonl_converter::readers::line_iter::LineIterator;
 use jsonl_converter::readers::utils::verify_first_char;
 
 fn main() {
-    let parsed_args = parse_args();
-    let filepath = parsed_args.0;
-    let is_messy = parsed_args.1;
+
+    let (filepath, is_messy) = parse_args();
 
     if is_messy {
         bytes_iter(&filepath);

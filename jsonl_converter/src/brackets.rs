@@ -54,7 +54,7 @@ pub fn is_opening_bracket(c: &char) -> bool {
 /// assert_eq!(is_closing_bracket(&'a'), false);
 /// assert_eq!(is_closing_bracket(&')'), false);
 /// assert_eq!(is_closing_bracket(&'}'), true);
-/// 
+///
 /// ```
 pub fn is_closing_bracket(c: &char) -> bool {
     match c {
@@ -102,7 +102,7 @@ impl BracketStack {
     /// Creates a new `BracketStack`.
     pub fn new() -> Self {
         BracketStack {
-            stack: vec![],
+            stack: Vec::new(),
             _map: brackets_map(),
         }
     }
@@ -123,7 +123,7 @@ impl BracketStack {
     ///
     /// * `c` - A bracket.
     pub fn push(&mut self, c: &char) {
-        self.stack.push(c.clone());
+        self.stack.push(*c);
     }
 
     /// Pops a bracket off of the `BracketStack`.

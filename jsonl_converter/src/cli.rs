@@ -18,13 +18,15 @@ use std::env;
 ///
 /// * If the filepath is not provided.
 pub fn parse_args() -> (String, bool) {
-    let args: Vec<String> = env::args().collect();
-    let filepath = args[1].to_owned();
-    let mut is_messy = false;
+    let mut args = env::args_os();
+    args.next(); // Skip the program name.
 
-    if args.len() > 2 {
-        is_messy = args[2] == "--messy";
-    }
+    let filepath = args.next().expect("No filepath provided.");
+    let is_messy = if let Some(arg) = args.next() {
+        arg == "--messy"
+    } else {
+        false
+    };
 
-    (filepath, is_messy)
+    (filepath.into_string().unwrap(), is_messy)
 }
