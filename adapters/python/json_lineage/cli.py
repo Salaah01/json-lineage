@@ -58,7 +58,7 @@ def main() -> None:
     """
     args = parse_args()
     if args.messy:
-        reader = BinaryReader(args.filepath, "--messy")
+        reader = BinaryReader(args.filepath, True)
     else:
         reader = BinaryReader(args.filepath)
 
