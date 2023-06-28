@@ -19,6 +19,17 @@ def parse_args() -> argparse.Namespace:
         help="Path to the JSON file to read.",
     )
     parser.add_argument(
+        "--messy",
+        "-m",
+        action="store_true",
+        help=(
+            "Indicates that the JSON file may not be well formatted. For "
+            "example, the file may contain multiple JSON objects on a "
+            "single line. Note: this option is considerably slower than "
+            "the default option."
+        ),
+    )
+    parser.add_argument(
         "--output-file",
         "-o",
         type=str,
@@ -46,7 +57,11 @@ def main() -> None:
     module.
     """
     args = parse_args()
-    reader = BinaryReader(args.filepath)
+    if args.messy:
+        reader = BinaryReader(args.filepath, "--messy")
+    else:
+        reader = BinaryReader(args.filepath)
+
     if args.output_file:
         write_lines(reader, args.output_file)
     else:

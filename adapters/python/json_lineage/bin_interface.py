@@ -25,9 +25,10 @@ def get_bin_path() -> str:
 class BaseBinaryReader:
     """Base class for the `BinaryReader` and `AsyncBinaryReader` classes."""
 
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: str, messy: bool = False):
         self.bin_path = get_bin_path()
         self.file_path = filepath
+        self.messy = messy
         self._proc: _t.Optional[
             _t.Union[subprocess.Popen, asyncio.subprocess.Process]
         ] = None
@@ -37,6 +38,13 @@ class BaseBinaryReader:
             f"<{self.__class__.__name__} bin_path={self.bin_path} "
             f"file_path={self.file_path}>"
         )
+
+    def bin_args(self) -> _t.List[str]:
+        """Return the arguments to pass to the binary."""
+        bin_args = [self.bin_path, self.file_path]
+        if self.messy:
+            bin_args.append("--messy")
+        return bin_args
 
     def kill_subprocess_proc(self) -> None:
         """Kill the subprocess process."""
@@ -64,7 +72,7 @@ class BinaryReader(BaseBinaryReader):
     def popen(self) -> subprocess.Popen:
         """Run the binary and return a Popen object."""
         self._proc = subprocess.Popen(
-            [self.bin_path, self.file_path],
+            self.bin_args(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
@@ -111,9 +119,9 @@ class AsyncBinaryReader(BaseBinaryReader):
 
     async def popen(self) -> asyncio.subprocess.Process:
         """Run the binary and return a Popen object."""
+
         self._proc = await asyncio.create_subprocess_exec(
-            self.bin_path,
-            self.file_path,
+            *self.bin_args(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )

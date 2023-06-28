@@ -8,6 +8,7 @@ from unittest import IsolatedAsyncioTestCase, TestCase
 from unittest.mock import patch
 
 from json_lineage import bin_interface
+from json_lineage.bin_interface import get_bin_path
 from json_lineage.exceptions import BinaryExecutionException
 
 from .helpers import SAMPLE_DATA_PATH
@@ -75,6 +76,22 @@ class TestBaseBinaryReader(TestCase):
         self.assertTrue(proc.stderr.closed)
         time.sleep(0.01)
         self.assertIsNotNone(proc.poll())
+
+    def test_bin_args_with_just_filename(self):
+        """Test that the `bin_args` method returns the correct arguments when
+        only the filename is passed.
+        """
+        reader = bin_interface.BinaryReader("filename")
+        self.assertEqual(reader.bin_args(), [get_bin_path(), "filename"])
+
+    def test_bin_with_messy_opt(self):
+        """Test that the `bin_args` method returns the correct arguments when
+        the `messy` option is passed.
+        """
+        reader = bin_interface.BinaryReader("filename", messy=True)
+        self.assertEqual(
+            reader.bin_args(), [get_bin_path(), "filename", "--messy"]
+        )
 
 
 class TestBinaryReader(ReaderInstanceMixin, TestCase):
