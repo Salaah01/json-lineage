@@ -9,12 +9,11 @@
       - [Why not Just Use Python's `json` Library?](#why-not-just-use-pythons-json-library)
       - [Functionality](#functionality)
       - [Benchmarks](#benchmarks)
-        - [32MB JSON file](#32mb-json-file)
-        - [324MB JSON file](#324mb-json-file)
       - [Installation](#installation)
       - [Usage](#usage)
         - [Iterating over a JSON file](#iterating-over-a-json-file)
         - [Iterating over a JSON file asynchronously](#iterating-over-a-json-file-asynchronously)
+        - [Poorly Formatted JSON](#poorly-formatted-json)
   - [Under the Hood](#under-the-hood)
 
 
@@ -22,7 +21,7 @@
 
 JSON Linage is a tool that allows you to convert JSON to JSONL (JSON Lines) format as well as iteratively parse JSON where the JSON contains a list of objects.
 
-The underlying program is written in Rust and is built to feed one JSON object at a time to the parser. This allows for the parsing of very large JSON files that would otherwise not fit into memory.
+The underlying program is written in Rust and is built to feed one JSON object at a time to the parser. This allows for the parsing of very large JSON files that would otherwise not fit into memory. In addition to saving memory, this program is capable of parsing JSON files faster than the built-in Python JSON parser as the file size increases.
 
 Additionally, this project contains adapters for easy integration into other programming languages. Currently, there is only a Python adapter, but more are planned.
 
@@ -60,21 +59,20 @@ For information on how to use the CLI, run: `python -m json_lineage --help`.
 
 The following benchmarks where run comparing the performance of the Python JSON parser and JSON Lineage. These results should help you decide when Python's JSON parser is sufficient and when you should use JSON Lineage.
 
-##### 32MB JSON file
+In a nutshell, when working with very small JSON files, Python's JSON parser is faster. However, as the size of the JSON file increases, JSON Lineage becomes faster. Additionally, JSON Lineage uses significantly less memory than Python's JSON parser.
 
-| Library        | Time (s) | Memory (MB) |
-| -------------- | -------- | ----------- |
-| `json`         | 0.166    | 158.99      |
-| `json_lineage` | 1.01     | 0.52        |
-
-##### 324MB JSON file
-
-| Library        | Time (s) | Memory (MB) |
-| -------------- | -------- | ----------- |
-| `json`         | 1.66     | 1580.46     |
-| `json_lineage` | 10.06    | 0.71        |
+| Size (MB) | `json` Time (s) | `json_lineage` Time (s) | `json` Memory (MB) | `json_lineage` Memory (MB) |
+| --------- | --------------- | ----------------------- | ------------------ | -------------------------- |
+| 0.05      | 0.0002          | 0.0010                  | 0.25               | 0.25                       |
+| 0.1       | 0.0004          | 0.0009                  | 0.53               | 0.25                       |
+| 5         | 0.02            | 0.01                    | 25.47              | 0.52                       |
+| 32        | 0.166           | 1.10                    | 158.99             | 0.77                       |
+| 324       | 1.66            | 0.99                    | 1580.46            | 0.92                       |
 
 
+![Benchmark of difference in time as file size grows](/docs/benchmark/benchmark-time-diff.jpg)
+
+![Benchmark of difference in memory as file size grows](/docs/benchmark/benchmark-memory-diff.jpg)
 
 #### Installation
 
@@ -90,7 +88,6 @@ pip install json-lineage
 from json_lineage import load
 
 jsonl_iter = load("path/to/file.json")
-
 
 for obj in jsonl_iter:
     do_something(obj)
@@ -122,6 +119,23 @@ async def main():
 asyncio.run(main())
 ```
 
+##### Poorly Formatted JSON
+
+When parsing a JSON file, the program will assume that the JSON file is well formatted. If the JSON file is not well formatted, then you can provide a `messy=True` argument to either the sync or async load:
+
+```python
+from json_lineage import load
+
+jsonl_iter = load("path/to/file.json", messy=True)
+
+
+for obj in jsonl_iter:
+    do_something(obj)
+```
+
+This will cause the program to output the same results. However, how it parses the JSON file will be different. Using this option will cause the program to be slower, but it will be able to parse JSON files that are not well formatted.
+
+If you are using the CLI, then you can use the `--messy` flag to achieve the same result.
 
 ## Under the Hood
 
