@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["verify_first_char"],"struct":["ByteIterator"]};

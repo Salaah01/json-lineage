@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["get_filepath"]};
+window.SIDEBAR_ITEMS = {"fn":["parse_args"]};
