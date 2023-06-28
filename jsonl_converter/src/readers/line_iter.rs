@@ -1,3 +1,7 @@
+//! This module contains the `LineIterator` struct, which is used to iterate
+//! over the lines of a file. This allows us to read and process a file line by
+//! line, instead of reading the entire file into memory at once.
+
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},

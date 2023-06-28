@@ -60,7 +60,7 @@ impl LineProcessor {
     ///
     /// * `line` - A line of a file.
     pub fn process_line(&mut self, line: &str) {
-        let line = line.trim().to_owned();
+        let line = line.trim();
 
         let start_char = line.chars().next().unwrap();
         let end_char = self.get_end_char(&line);

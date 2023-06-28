@@ -28,6 +28,8 @@
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
 <a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Contains CLI related code.
 
 </span><span class="kw">use </span>std::env;
@@ -48,14 +50,16 @@
 ///
 /// * If the filepath is not provided.
 </span><span class="kw">pub fn </span>parse_args() -&gt; (String, bool) {
-    <span class="kw">let </span>args: Vec&lt;String&gt; = env::args().collect();
-    <span class="kw">let </span>filepath = args[<span class="number">1</span>].to_owned();
-    <span class="kw">let </span><span class="kw-2">mut </span>is_messy = <span class="bool-val">false</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>args = env::args_os();
+    args.next(); <span class="comment">// Skip the program name.
 
-    <span class="kw">if </span>args.len() &gt; <span class="number">2 </span>{
-        is_messy = args[<span class="number">2</span>] == <span class="string">&quot;--messy&quot;</span>;
-    }
+    </span><span class="kw">let </span>filepath = args.next().expect(<span class="string">&quot;No filepath provided.&quot;</span>);
+    <span class="kw">let </span>is_messy = <span class="kw">if let </span><span class="prelude-val">Some</span>(arg) = args.next() {
+        arg == <span class="string">&quot;--messy&quot;
+    </span>} <span class="kw">else </span>{
+        <span class="bool-val">false
+    </span>};
 
-    (filepath, is_messy)
+    (filepath.into_string().unwrap(), is_messy)
 }
 </code></pre></div></section></main></body></html>
