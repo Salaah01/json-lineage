@@ -57,10 +57,7 @@ def main() -> None:
     module.
     """
     args = parse_args()
-    if args.messy:
-        reader = BinaryReader(args.filepath, True)
-    else:
-        reader = BinaryReader(args.filepath)
+    reader = BinaryReader(args.filepath, args.messy)
 
     if args.output_file:
         write_lines(reader, args.output_file)
