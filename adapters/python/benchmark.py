@@ -44,11 +44,13 @@ def async_main():
 def benchmark(fn):
     print(f"{'BENCHMARKING:'.ljust(15)}{fn.__name__}")
     start_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    print(f"{'TIME:'.ljust(15)}{timeit.timeit(fn, number=1)}s")
-    delta = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - start_mem
-    print(f"{'MEMRORY USAGE:'.ljust(15)}{delta/1024} MB\n")
-
+    exec_time = timeit.timeit(fn, number=1)
+    print(f"{'TIME:'.ljust(15)}{exec_time}s")
+    delta_mb = (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - start_mem) / 1024
+    print(f"{'MEMRORY USAGE:'.ljust(15)}{delta_mb} MB\n")
+    return exec_time, delta_mb
 
 if __name__ == "__main__":
-    benchmark(using_rust_lib)
-    benchmark(using_python_lib)
+    rs_time, rs_mem = benchmark(using_rust_lib)
+    py_time, py_mem = benchmark(using_python_lib)
+    print(f"{py_time}|{rs_time}|{py_mem}|{rs_mem}")
