@@ -46,9 +46,12 @@ def benchmark(fn):
     start_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     exec_time = timeit.timeit(fn, number=1)
     print(f"{'TIME:'.ljust(15)}{exec_time}s")
-    delta_mb = (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - start_mem) / 1024
+    delta_mb = (
+        resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - start_mem
+    ) / 1024
     print(f"{'MEMRORY USAGE:'.ljust(15)}{delta_mb} MB\n")
     return exec_time, delta_mb
+
 
 if __name__ == "__main__":
     rs_time, rs_mem = benchmark(using_rust_lib)
