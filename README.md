@@ -39,8 +39,7 @@ The answer is, well, it depends.
 
 If you are parsing a small JSON file, then you probably don't want to use this library.
 
-Python's JSON library is written in C and is very fast. However, as it loads the entire JSON file into memory, it is not
-suitable for parsing very large JSON files. This is where JSON Lineage comes in.
+Python's JSON library is written in C and is very fast. However, as it loads the entire JSON file into memory, it is not suitable for parsing very large JSON files. This is where JSON Lineage comes in.
 
 JSON Lineage is designed to parse very
 large JSON files that would otherwise not fit into memory. It does this by parsing the JSON file one object at a time.
@@ -57,22 +56,16 @@ For information on how to use the CLI, run: `python -m json_lineage --help`.
 
 #### Benchmarks
 
-The following benchmarks where run comparing the performance of the Python JSON parser and JSON Lineage. These results should help you decide when Python's JSON parser is sufficient and when you should use JSON Lineage.
+The following graphs compare the speed and memory usage of Python's JSON library vs JSON Lineage.
 
-In a nutshell, when working with very small JSON files, Python's JSON parser is faster. However, as the size of the JSON file increases, JSON Lineage becomes faster. Additionally, JSON Lineage uses significantly less memory than Python's JSON parser.
+The benchmarks show that up to a file size of 500MB, the speed difference is negligible. However, already at this point, Python requires almost 2GB of memory to parse the JSON file, while JSON Lineage only requires 1.5GB.
 
-| Size (MB) | `json` Time (s) | `json_lineage` Time (s) | `json` Memory (MB) | `json_lineage` Memory (MB) |
-| --------- | --------------- | ----------------------- | ------------------ | -------------------------- |
-| 0.05      | 0.0002          | 0.0010                  | 0.25               | 0.25                       |
-| 0.1       | 0.0004          | 0.0009                  | 0.53               | 0.25                       |
-| 5         | 0.02            | 0.01                    | 25.47              | 0.52                       |
-| 32        | 0.166           | 1.10                    | 158.99             | 0.77                       |
-| 324       | 1.66            | 0.99                    | 1580.46            | 0.92                       |
+As the file size continues to grow, Python's JSON library continues to be faster, but the memory usage continues to grow at a linear rate. JSON Lineage, on the other hand, continues to use the same amount of memory.
 
 
-![Benchmark of difference in time as file size grows](/docs/benchmark/benchmark-time-diff.jpg)
+![Benchmark of difference in time as file size grows](/docs/benchmark/time_diff_chart.png)
 
-![Benchmark of difference in memory as file size grows](/docs/benchmark/benchmark-memory-diff.jpg)
+![Benchmark of difference in memory as file size grows](/docs/benchmark/mem_diff_chart.png)
 
 #### Installation
 
