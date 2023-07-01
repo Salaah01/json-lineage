@@ -211,3 +211,4 @@ Cargo.lock
 
 tmp.*
 sample_data/*_sample.json
+node_modules
