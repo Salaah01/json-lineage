@@ -4,15 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile-benchmark": "tsc benchmark.ts",
     "benchmark": "node benchmark.js"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "typescript": "^5.1.6"
   },
   "devDependencies": {
+    "typescript": "^5.1.6",
     "@types/node": "^20.3.3"
   }
 }
