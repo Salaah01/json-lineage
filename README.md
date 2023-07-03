@@ -8,7 +8,7 @@
     - [Python](#python)
       - [Why not Just Use Python's `json` Library?](#why-not-just-use-pythons-json-library)
       - [Functionality](#functionality)
-      - [Benchmarks](#benchmarks)
+      - [Performance Comparison](#performance-comparison)
       - [Installation](#installation)
       - [Usage](#usage)
         - [Iterating over a JSON file](#iterating-over-a-json-file)
@@ -29,20 +29,17 @@ Additionally, this project contains adapters for easy integration into other pro
 
 ### Python
 
-The Python adapter is a wrapper around the underlying Rust program. It allows for easy integration into Python programs.
-It is designed to feel a similar to the built-in `json` module in Python.
+The Python adapter is a wrapper around the underlying Rust program, providing seamless integration into Python applications. It is designed to have a similar feel to Python's built-in json module.
 
 #### Why not Just Use Python's `json` Library?
 
-Given that Python already has a built-in JSON parser, you may be wondering why you would want to use this library.
-The answer is, well, it depends.
+You might wonder why you would choose to use this library instead of Python's built-in JSON library. The answer depends on your specific use case.
 
-If you are parsing a small JSON file, then you probably don't want to use this library.
+If you are parsing a small JSON file, Python's JSON library is likely sufficient and performs well. However, when dealing with very large JSON files that exceed the available memory, JSON Lineage offers significant benefits.
 
-Python's JSON library is written in C and is very fast. However, as it loads the entire JSON file into memory, it is not suitable for parsing very large JSON files. This is where JSON Lineage comes in.
+Python's JSON library is written in C and is highly optimised for speed. However, it loads the entire JSON file into memory, making it unsuitable for parsing very large JSON files. This is where JSON Lineage shines.
 
-JSON Lineage is designed to parse very
-large JSON files that would otherwise not fit into memory. It does this by parsing the JSON file one object at a time.
+JSON Lineage is specifically designed to parse very large JSON files that would not fit into memory. It achieves this by parsing the JSON file one object at a time.
 
 #### Functionality
 
@@ -54,13 +51,13 @@ The following functionality is provided:
 A CLI is also provided for easy conversion of JSON files to JSONL files.
 For information on how to use the CLI, run: `python -m json_lineage --help`.
 
-#### Benchmarks
+#### Performance Comparison
 
 The following graphs compare the speed and memory usage of Python's JSON library vs JSON Lineage.
 
 The benchmarks show that up to a file size of 500MB, the speed difference is negligible. However, already at this point, Python requires almost 2GB of memory to parse the JSON file, while JSON Lineage only requires 1.5GB.
 
-As the file size continues to grow, Python's JSON library continues to be faster, but the memory usage continues to grow at a linear rate. JSON Lineage, on the other hand, continues to use the same amount of memory.
+As the file size continues to grow, Python's JSON library continues to be faster, but the memory usage continues to grow at a linear rate. JSON Lineage, in contrast, continues to use the same amount of memory.
 
 
 ![Benchmark of difference in time as file size grows](/docs/benchmark/time_diff_chart.png)
