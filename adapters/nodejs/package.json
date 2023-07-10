@@ -2,8 +2,9 @@
   "name": "json-linage",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
+    "build": "tsc",
     "benchmark": "node benchmark.js"
   },
   "author": "",
@@ -13,5 +14,6 @@
   "devDependencies": {
     "typescript": "^5.1.6",
     "@types/node": "^20.3.3"
-  }
+  },
+  "bin": "./bin/*"
 }
