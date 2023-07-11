@@ -3,6 +3,7 @@ import os
 import platform
 import subprocess
 import typing as _t
+import json
 from collections.abc import Awaitable, Coroutine
 
 from .exceptions import BinaryExecutionException
@@ -99,7 +100,7 @@ class BinaryIterator:
         if not line and self.process.poll() is not None:
             raise StopIteration
 
-        return line
+        return json.loads(line)
 
     def raise_err_if_stderr(self) -> None:
         """Raise an exception if the process has exited with a non-zero
