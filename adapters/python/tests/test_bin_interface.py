@@ -127,8 +127,8 @@ class TestBinaryReader(ReaderInstanceMixin, TestCase):
         correctly.
         """
         iterator = iter(self.reader)
-        self.assertEqual(next(iterator), '{"a": {"B": 1},"b": 2}')
-        self.assertEqual(next(iterator), '{"a": 1,"b": 2}')
+        self.assertEqual(next(iterator), {"a": {"B": 1}, "b": 2})
+        self.assertEqual(next(iterator), {"a": 1, "b": 2})
         with self.assertRaises(StopIteration):
             next(iterator)
 
@@ -213,8 +213,8 @@ class TestAsyncBinaryReader(ReaderInstanceMixin, IsolatedAsyncioTestCase):
         correctly.
         """
         iterator = self.reader.__aiter__()
-        self.assertEqual(await iterator.__anext__(), '{"a": {"B": 1},"b": 2}')
-        self.assertEqual(await iterator.__anext__(), '{"a": 1,"b": 2}')
+        self.assertEqual(await iterator.__anext__(), {"a": {"B": 1}, "b": 2})
+        self.assertEqual(await iterator.__anext__(), {"a": 1, "b": 2})
         with self.assertRaises(StopAsyncIteration):
             await iterator.__anext__()
 

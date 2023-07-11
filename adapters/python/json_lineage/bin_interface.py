@@ -1,9 +1,9 @@
 import asyncio
+import json
 import os
 import platform
 import subprocess
 import typing as _t
-import json
 from collections.abc import Awaitable, Coroutine
 
 from .exceptions import BinaryExecutionException
@@ -162,7 +162,7 @@ class AsyncBinaryIterator:
         if not output:
             raise StopAsyncIteration
 
-        return output
+        return json.loads(output)
 
     async def read_output(self, process: asyncio.subprocess.Process) -> str:
         if process.stdout is None:
