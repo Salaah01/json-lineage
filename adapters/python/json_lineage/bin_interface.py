@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import platform
 import subprocess
@@ -99,7 +100,7 @@ class BinaryIterator:
         if not line and self.process.poll() is not None:
             raise StopIteration
 
-        return line
+        return json.loads(line)
 
     def raise_err_if_stderr(self) -> None:
         """Raise an exception if the process has exited with a non-zero
@@ -161,7 +162,7 @@ class AsyncBinaryIterator:
         if not output:
             raise StopAsyncIteration
 
-        return output
+        return json.loads(output)
 
     async def read_output(self, process: asyncio.subprocess.Process) -> str:
         if process.stdout is None:

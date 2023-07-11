@@ -3,6 +3,7 @@ adapter.
 """
 
 import argparse
+import json
 
 from .bin_interface import BinaryReader
 
@@ -42,14 +43,14 @@ def parse_args() -> argparse.Namespace:
 def print_lines(reader: BinaryReader) -> None:
     """Prints the lines from the given reader to stdout."""
     for line in reader:
-        print(line)
+        print(json.dumps(line))
 
 
 def write_lines(reader: BinaryReader, filepath: str) -> None:
     """Writes the lines from the given reader to the given filepath."""
     with open(filepath, "w") as f:
         for line in reader:
-            f.write(line + "\n")
+            f.write(json.dumps(line) + "\n")
 
 
 def main() -> None:
