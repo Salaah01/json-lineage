@@ -60,9 +60,9 @@ The benchmarks show that up to a file size of 500MB, the speed difference is neg
 As the file size continues to grow, Python's JSON library continues to be faster, but the memory usage continues to grow at a linear rate. JSON Lineage, in contrast, continues to use the same amount of memory.
 
 
-![Benchmark of difference in time as file size grows](/docs/benchmark/time_diff_chart.png)
+![Benchmark of difference in time as file size grows](https://github.com/Salaah01/json-lineage/raw/master/docs/benchmark/time_diff_chart.png)
 
-![Benchmark of difference in memory as file size grows](/docs/benchmark/mem_diff_chart.png)
+![Benchmark of difference in memory as file size grows](https://github.com/Salaah01/json-lineage/raw/master/docs/benchmark/mem_diff_chart.png)
 
 #### Installation
 
